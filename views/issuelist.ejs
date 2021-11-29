@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<%- include ("partials/head.ejs") %>
+
+<body>
+    <header>
+        <%- include ("partials/navbar.ejs") %>
+    </header>
+    <main>
+        <div class="container" id="techtable">
+            <h2>Issues</h2>
+            <br>
+            <table class="table table-striped">
+                <thead>
+                    <th>ISSUE ID</th>
+                    <th>DESCRIPTION</th>
+                    <th>SEVERITY</th>
+                    <th>STATUS</th>
+                    <th>TECHNICIAN</th>
+                    <th>ACTIONS</th>
+                </thead>
+                <tbody id="listofissues"></tbody>
+            </table>
+        </div>
+        <!-- Modal -->
+        <div class="modal fade" id="edit-issues" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="exampleModalLabel">Update Issue</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form>
+                            <div class="mb-3">
+                                <label for="udescription" class="form-label">Description</label>
+                                <input type="text" class="form-control" name="udescription" id="udescription" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="useverity" class="form-label">Severity</label><br>
+                                <select name="useverity" id="useverity" required style="width: 100%; height: 37px;">
+                                    <option value="Low">Low</option>
+                                    <option value="Medium">Medium</option>
+                                    <option value="High">High</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="ustatus" class="form-label">Status</label><br>
+                                <select name="ustatus" id="ustatus" required style="width: 100%; height: 37px;">
+                                    <option value="Opened">Opened</option>
+                                    <option value="Closed">Closed</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="utech" class="form-label">Technician</label><br>
+                                <select name="utech" id="utech" required style="width: 100%; height: 37px;"></select>
+                            </div>
+                            <input type="hidden" name="" id="row-to-update">
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-primary" onclick="updateIssueRow()">Save changes</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+    <footer>
+        <%- include ("partials/footer.ejs") %>
+    </footer>
+    <script>
+        window.onload = () => {
+            getIss();
+            getTechNames()
+        }
+
+        let getTechNames = () => {
+            $.ajax({
+                url: '/techs/listtechs',
+                type: 'GET',
+                success: (data, status) => {
+                    if (status === 'success') {
+                        displayTechNames(data);
+                    }
+                }
+            })
+        }
+
+        let displayTechNames = (data) => {
+            console.log(data)
+            let list = '';
+            data.forEach(tech => {
+                list += `<option value="${tech.techID}">${tech.fname} ${tech.lname}</option>`;
+            });
+            $('#utech').html(list);
+        }
+
+        let getIss = () => {
+            $.ajax({
+                url: '/issues/listissues',
+                type: 'GET',
+                success: (data, status) => {
+                    if (status === 'success') {
+                        displayIssuesData(data);
+
+                    }
+                }
+            })
+        }
+
+        let displayIssuesData = (data) => {
+            console.log(data)
+            let list = '';
+            data.forEach(issue => {
+                list += `<tr>
+                            <td>${issue.issueID}</td>
+                            <td>${issue.description}</td>
+                            <td>${issue.severity}</td>
+                            <td>${issue.status}</td>
+                            <td>${issue.Fullname}</td>
+                            <td>
+                                <button class="btn btn-link" onclick="deleteIssueRow(${issue.issueID})">
+                                    <i class="fa fa-trash-o" style="font-size:24px;color:red"></i>
+                                </button>
+                                <button class="btn btn-link" onclick=\'editIssueRow(${JSON.stringify(issue)})\'>
+                                    <i class="fa fa-edit" style="font-size:24px;color:blue"></i>
+                                </button>
+                            </td>
+                        </tr>`
+            })
+            $('#listofissues').html(list);
+        }
+
+        let deleteIssueRow = (issueID) => {
+            $.ajax({
+                url: `/issues/deleteissue/${issueID}`,
+                type: 'DELETE',
+                success: (data, status) => {
+                    if (status === 'success') {
+                        getIss();
+                        alert('DELETED!')
+                    }
+                }
+            })
+        }
+
+        let editIssueRow = (issue) => {
+            $('#udescription').val(issue.description);
+            $('#useverity').val(issue.severity);
+            $('#ustatus').val(issue.status);
+            $('#utech').val(issue.techID)
+            $('#row-to-update').val(issue.issueID);
+            $('#edit-issues').modal('show');
+        }
+
+        let updateIssueRow = () => {
+            var form = {
+                fname: $("#ufname").val(),
+                lname: $("#ulname").val(),
+                email: $("#uemail").val(),
+                phone: $("#uphone").val()
+            }
+            let techID = $('#row-to-update').val();
+            $.ajax({
+                url: `/techs/updatetech/${techID}`,
+                type: 'PUT',
+                data: form,
+                success: (data, status) => {
+                    if (status === 'success') {
+                        getTechs();
+                        alert('Updated!')
+                    }
+                }
+            })
+            $('#edit-techs').modal('hide');
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<%- include ("partials/head.ejs") %>
+
+<body>
+    <header>
+        <%- include ("partials/navbar.ejs") %>
+    </header>
+    <main>
+        <div class="container" id="techtable">
+            <h2>Technicians</h2>
+            <br>
+            <table class="table table-hover table-striped">
+                <thead>
+                    <th>FIRST NAME</th>
+                    <th>LAST NAME</th>
+                    <th>EMAIL</th>
+                    <th>CONTACT</th>
+                    <th>ACTIONS</th>
+                </thead>
+                <tbody id="listoftech"></tbody>
+            </table>
+        </div>
+
+        <!-- Modal -->
+        <div class="modal fade" id="edit-techs" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="exampleModalLabel">Update Technician</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form>
+                            <div class="mb-3">
+                                <label for="ufname" class="form-label">First Name</label>
+                                <input type="text" class="form-control" name="ufname" id="ufname" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="ulname" class="form-label">Last Name</label>
+                                <input type="text" class="form-control" name="ulname" id="ulname" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="uemail" class="form-label">Email</label>
+                                <input type="text" class="form-control" name="uemail" id="uemail" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="uphone" class="form-label">Phone</label>
+                                <input type="tel" step="0.1" class="form-control" name="uphone" id="uphone" required>
+                            </div>
+                            <input type="hidden" name="" id="row-to-update">
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-primary" onclick="updateTechRow()">Save changes</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+    <footer>
+        <%- include ("partials/footer.ejs") %>
+    </footer>
+    <script>
+        window.onload = () => {
+            getTechs();
+        }
+
+        let getTechs = () => {
+            $.ajax({
+                url: '/techs/listtechs',
+                type: 'GET',
+                success: (data, status) => {
+                    if (status === 'success') {
+                        displayTechData(data);
+
+                    }
+                }
+            })
+        }
+
+        let displayTechData = (data) => {
+            console.log(data)
+            let list = '';
+            data.forEach(tech => {
+                list += `<tr>
+                            <td>${tech.fname}</td>
+                            <td>${tech.lname}</td>
+                            <td>${tech.email}</td>
+                            <td>${tech.phone}</td>
+                            <td>
+                                <button class="btn btn-link" onclick="deleteTechRow(${tech.techID})">
+                                    <i class="fa fa-trash-o" style="font-size:24px;color:red"></i>
+                                </button>
+                                <button class="btn btn-link" onclick=\'editTechRow(${JSON.stringify(tech)})\'>
+                                    <i class="fa fa-edit" style="font-size:24px;color:blue"></i>
+                                </button>
+                            </td>
+                        </tr>`
+            })
+            $('#listoftech').html(list);
+        }
+
+        let deleteTechRow = (techID) => {
+            console.log(techID);
+            $.ajax({
+                url: `/techs/deletetech/${techID}`,
+                type: 'DELETE',
+                success: (data, status) => {
+                    if (status === 'success') {
+                        getTechs();
+                        alert('DELETED!')
+                    }
+                }
+            })
+        }
+
+        let editTechRow = (technician) => {
+            $('#ufname').val(technician.fname);
+            $('#ulname').val(technician.lname);
+            $('#uemail').val(technician.email);
+            $('#uphone').val(technician.phone)
+            $('#row-to-update').val(technician.techID);
+            $('#edit-techs').modal('show');
+        }
+
+        let updateTechRow = () => {
+            var form = {
+                fname: $("#ufname").val(),
+                lname: $("#ulname").val(),
+                email: $("#uemail").val(),
+                phone: $("#uphone").val()
+            }
+            let techID = $('#row-to-update').val();
+            $.ajax({
+                url: `/techs/updatetech/${techID}`,
+                type: 'PUT',
+                data: form,
+                success: (data, status) => {
+                    if (status === 'success') {
+                        getTechs();
+                        alert('Updated!')
+                    }
+                }
+            })
+            $('#edit-techs').modal('hide');
+        }
+    </script>
+</body>
+
+</html>

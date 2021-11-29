@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<%- include ("partials/head.ejs") %>
+
+<body>
+  <header>
+    <%- include ("partials/navbar.ejs") %>
+  </header>
+  <main>
+    <div class="container">
+      <form class="row g-3" id="issueform">
+        <h2>Report Issues</h1>
+          <hr>
+          <div class="col-md-6">
+            <label for="description" class="form-label">Description</label>
+            <input type="text" class="form-control" name="description" id="description">
+          </div>
+          <div class="col-md-6">
+            <label for="severity" class="form-label">Severity</label>
+            <br>
+            <select name="severity" id="severity">
+              <option value="Low">Low</option>
+              <option value="Medium">Medium</option>
+              <option value="High">High</option>
+            </select> 
+          </div>
+          <div class="col-md-6">
+            <label for="status" class="form-label">Status</label>
+            <select name="status" id="status">
+              <option value="Opened">Opened</option>
+              <option value="Closed">Closed</option>
+            </select> 
+          </div>
+          <div class="col-md-6">
+            <label for="techname" class="form-label">Assigned To</label><br>
+            <select name="techname" id="techname">
+            </select>
+          </div>
+          <div class="col-12">
+            <button type="submit" class="btn btn-warning" onclick="clearissue(event)">Cancel</button>
+            <button type="button" class="btn btn-primary" onclick="saveissue()">Save</button>
+            <span id="issueerrmessage" hidden>Please fill out all boxes</span>
+          </div>
+      </form>
+    </div>
+  </main>
+  <footer>
+    <%- include ("partials/footer.ejs") %>
+  </footer>
+  <script>
+    window.onload = () => {
+      getTechNames();
+    }
+
+    let getTechNames = () => {
+      $.ajax({
+        url: '/techs/listtechs',
+        type: 'GET',
+        success: (data, status) => {
+          if (status === 'success') {
+            displayTechNames(data);
+          }
+        }
+      })
+    }
+
+    let displayTechNames = (data) => {
+      console.log(data)
+      let list = '';
+      data.forEach(tech => {
+        list += `<option value="${tech.techID}">${tech.fname} ${tech.lname}</option>`;
+      });
+      $('#techname').html(list);
+    }
+
+    let saveissue = () => {
+      if (document.querySelector("#description").value == "" || document.querySelector("#severity").value == "" || document.querySelector("#status").value == "" || document.querySelector("#techname").value == "") {
+        alert("Please fill out all boxes!");
+        return;
+      }
+      else{
+        document.querySelector("#issueerrmessage").hidden = true;
+      }
+      
+      var form = {
+        description: $("#description").val(),
+        severity: $("#severity").val(),
+        status: $("#status").val(),
+        techID: $("#techname").val()
+      }
+      $.ajax({
+        url: '/issues/saveissues',
+        type: 'POST',
+        data: form,
+        success: function (data, status) {
+          if (status == "success")
+            alert("Saved!")
+        }
+      })
+    }
+
+    let clearissue = (e) => {
+      e.preventDefault()
+      document.querySelector("#description").value = "";
+      document.querySelector("#description").focus();
+    }
+  </script>
+</body>
+
+</html>
